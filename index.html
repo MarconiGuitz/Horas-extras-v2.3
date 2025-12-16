@@ -10,17 +10,23 @@
 
 <style>
 body{
-    font-family:system-ui,sans-serif;
-    background:linear-gradient(135deg,#667eea,#764ba2);
+    font-family: system-ui, sans-serif;
+    background: linear-gradient(135deg,#ffffff,#000000);
     margin:0;padding:20px
 }
 .container{
-    max-width:720px;margin:auto;background:#fff;
-    border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.3)
+    max-width:700px;
+    margin:auto;
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+    overflow:hidden
 }
 .header{
-    background:linear-gradient(135deg,#667eea,#764ba2);
-    color:#fff;padding:25px;text-align:center
+    background:linear-gradient(135deg,#000000,#82d8a6);
+    color:#fff;
+    padding:25px;
+    text-align:center
 }
 .tabs{display:flex;background:#f1f1f1}
 .tab{
@@ -29,32 +35,33 @@ body{
     cursor:pointer;color:#666
 }
 .tab.active{
-    background:#fff;color:#667eea;
-    border-bottom:3px solid #667eea
+    background:#fff;
+    color:#000000;
+    border-bottom:3px solid #dbdbdb
 }
 .content{padding:20px}
 .section{display:none}
 .section.active{display:block}
-label{font-weight:600}
+label{font-weight:600;margin-bottom:5px;display:block}
 input,select,textarea{
     width:100%;padding:12px;
-    border-radius:10px;border:2px solid #eaeaea;
-    margin:10px 0 15px;font-size:16px
+    border-radius:10px;
+    border:2px solid #eaeaea;
+    margin-bottom:15px;
+    font-size:16px
 }
 textarea{resize:vertical}
 button{
-    width:100%;padding:15px;border:none;
-    border-radius:10px;
-    background:linear-gradient(135deg,#667eea,#764ba2);
-    color:#fff;font-size:16px;font-weight:600
-}
-.registro{
-    background:#f8f9fa;padding:15px;
-    border-radius:10px;margin-bottom:10px
+    width:100%;padding:15px;
+    border:none;border-radius:10px;
+    background:linear-gradient(135deg,#000000,#979699);
+    color:#fff;font-size:16px;
+    font-weight:600;cursor:pointer
 }
 .resultado{
-    background:linear-gradient(135deg,#667eea,#764ba2);
-    color:#fff;padding:20px;border-radius:15px
+    background:linear-gradient(135deg,#b9c7b7,#599271);
+    color:#fff;
+    padding:20px;border-radius:15px
 }
 .resultado-item{
     display:flex;justify-content:space-between;
@@ -63,7 +70,12 @@ button{
 .resultado-item:last-child{
     border:none;font-size:18px;font-weight:700
 }
-small{color:#555}
+.registro{
+    background:#f8f9fa;padding:15px;
+    border-radius:10px;margin-bottom:10px
+}
+small{color:#666}
+hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 </style>
 </head>
 
@@ -276,3 +288,4 @@ if('serviceWorker'in navigator){
 
 </body>
 </html>
+
