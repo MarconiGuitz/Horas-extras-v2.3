@@ -235,13 +235,27 @@ function mostrarHistorial(){
     registros.forEach((r,i)=>{
         lista.innerHTML+=`
         <div class="registro">
-        <b>${r.fecha}</b><br>
-        ☀️ ${r.hd}h Q${r.md.toFixed(2)}<br>
-        🌙 ${r.hn}h Q${r.mn.toFixed(2)}<br>
-        <small>${r.desc}</small>
+            <b>${r.fecha}</b><br>
+            ☀️ ${r.hd}h = Q${r.md.toFixed(2)}<br>
+            🌙 ${r.hn}h = Q${r.mn.toFixed(2)}<br>
+            <small>${r.desc}</small><br><br>
+
+            <button onclick="eliminarRegistro(${i})"
+                style="
+                    background:#b30000;
+                    color:#fff;
+                    border:none;
+                    border-radius:8px;
+                    padding:8px 12px;
+                    cursor:pointer;
+                    font-size:14px
+                ">
+                🗑️ Eliminar
+            </button>
         </div>`;
     });
 }
+
 
 /* RESUMEN */
 function resumen(){
@@ -358,4 +372,5 @@ function resumen(){
 
 </body>
 </html>
+
 
