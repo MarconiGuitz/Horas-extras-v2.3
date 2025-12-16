@@ -6,7 +6,6 @@
 <title>Horas Extras GT</title>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#667eea">
 
 <style>
 body{
@@ -58,6 +57,10 @@ button{
     color:#fff;font-size:16px;
     font-weight:600;cursor:pointer
 }
+.btn-cerrar{
+    background:linear-gradient(135deg,#7a0000,#c0392b);
+    margin-top:10px
+}
 .resultado{
     background:linear-gradient(135deg,#b9c7b7,#599271);
     color:#fff;
@@ -100,34 +103,28 @@ hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 <div id="config" class="section active">
 
 <label>Sueldo base mensual (Q)</label>
-<input id="sueldoBase" type="number" step="0.01">
+<input id="sueldoBase" type="number">
 
-<label>Hora extra diurna (Q)</label>
-<input id="valorHoraDiurna" readonly>
-
-<label>Hora extra nocturna (Q)</label>
-<input id="valorHoraNocturna" readonly>
-
-<hr>
-
-<label>🏥 IGSS (%)</label>
+<label>IGSS (%)</label>
 <input id="porcentajeIGSS" value="4.83">
 
-<label>📄 ISR (%)</label>
+<label>ISR (%)</label>
 <input id="porcentajeISR" value="5">
 
 <hr>
 
-<label>💸 Descuento mensual (Préstamo, otros) (Q)</label>
-<input id="descuentoFijo" type="number" step="0.01" value="0">
+<label>Préstamos / otros descuentos (Q)</label>
+<input id="descuentoFijo" type="number" value="0">
 
-<label>💰 Ahorro mensual (Q)</label>
-<input id="ahorroMensual" type="number" step="0.01" value="0">
+<label>Ahorro mensual (Q)</label>
+<input id="ahorroMensual" type="number" value="0">
 
-<label>🏦 Ahorro acumulado actual (Q)</label>
-<input id="ahorroAcumulado" type="number" step="0.01" value="0">
+<label>Ahorro acumulado actual (Q)</label>
+<input id="ahorroAcumulado" type="number" value="0">
 
 <button onclick="guardarConfig()">Guardar configuración</button>
+<button class="btn-cerrar" onclick="cerrarMes()">📆 Cerrar mes</button>
+
 </div>
 
 <!-- REGISTRO -->
@@ -163,19 +160,8 @@ hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 <script>
 let config={}, registros=[];
 
-/* RESET SOLO HORAS (NO AHORRO) */
-function verificarMes(){
-    const h=new Date();
-    const mes=`${h.getFullYear()}-${h.getMonth()}`;
-    if(localStorage.getItem('mes')!==mes){
-        localStorage.setItem('mes',mes);
-        localStorage.setItem('registros',JSON.stringify([]));
-    }
-}
-
 /* INIT */
 window.onload=()=>{
-    verificarMes();
     fecha.valueAsDate=new Date();
     config=JSON.parse(localStorage.getItem('config')||'{}');
     registros=JSON.parse(localStorage.getItem('registros')||'[]');
@@ -187,7 +173,6 @@ window.onload=()=>{
         descuentoFijo.value=config.descuentoFijo;
         ahorroMensual.value=config.ahorroMensual;
         ahorroAcumulado.value=config.ahorroAcumulado;
-        calcularHoras();
     }
     mostrarHistorial();
 };
@@ -201,20 +186,10 @@ function tab(id,el){
     if(id==='resumen') resumen();
 }
 
-/* HORAS */
-function calcularHoras(){
-    let s=+sueldoBase.value||0;
-    valorHoraDiurna.value=(s/30/8*1.5).toFixed(2);
-    valorHoraNocturna.value=(s/30/8*2).toFixed(2);
-}
-sueldoBase.oninput=calcularHoras;
-
-/* GUARDAR CONFIG */
+/* CONFIG */
 function guardarConfig(){
     config={
         sueldoBase:+sueldoBase.value,
-        valorHoraDiurna:+valorHoraDiurna.value,
-        valorHoraNocturna:+valorHoraNocturna.value,
         porcentajeIGSS:+porcentajeIGSS.value,
         porcentajeISR:+porcentajeISR.value,
         descuentoFijo:+descuentoFijo.value,
@@ -225,10 +200,53 @@ function guardarConfig(){
     alert('Configuración guardada');
 }
 
-/* REGISTRO */
+/* CERRAR MES */
+function cerrarMes(){
+    if(!confirm('¿Cerrar el mes y sumar el ahorro?')) return;
+
+    config.ahorroAcumulado += config.ahorroMensual;
+    localStorage.setItem('config',JSON.stringify(config));
+
+    registros=[];
+    localStorage.setItem('registros',JSON.stringify(registros));
+
+    alert('Mes cerrado correctamente');
+    mostrarHistorial();
+}
+
+/* REGISTROS */
+function registrar(){
+    registros.push({
+        fecha:fecha.value,
+        hd:+hd.value,
+        hn:+hn.value,
+        desc:desc.value,
+        md:+hd.value*(config.sueldoBase/30/8*1.5),
+        mn:+hn.value*(config.sueldoBase/30/8*2)
+    });
+    localStorage.setItem('registros',JSON.stringify(registros));
+    hd.value=hn.value=0;desc.value='';
+    mostrarHistorial();
+}
+
+/* HISTORIAL */
+function mostrarHistorial(){
+    lista.innerHTML='';
+    registros.forEach((r,i)=>{
+        lista.innerHTML+=`
+        <div class="registro">
+        <b>${r.fecha}</b><br>
+        ☀️ ${r.hd}h Q${r.md.toFixed(2)}<br>
+        🌙 ${r.hn}h Q${r.mn.toFixed(2)}<br>
+        <small>${r.desc}</small>
+        </div>`;
+    });
+}
+
+/* RESUMEN */
 function resumen(){
 
-    // HORAS Y TOTALES
+    // HORAS
     let horasD = registros.reduce((s,r)=>s+r.hd,0);
     let horasN = registros.reduce((s,r)=>s+r.hn,0);
 
@@ -239,35 +257,33 @@ function resumen(){
     // DEVENGADO
     let dev = config.sueldoBase + totalExtras;
 
-    // DESCUENTOS LEGALES (MENSUALES)
+    // DESCUENTOS (SOLO 2ª QUINCENA)
     let igss = dev * (config.porcentajeIGSS / 100);
     let isr  = (dev - igss) * (config.porcentajeISR / 100);
 
-    // AHORRO
-    let ahorroNuevo = config.ahorroMensual;
-    let ahorroTotal = config.ahorroAcumulado + ahorroNuevo;
+    let descuentosTotales =
+        igss +
+        isr +
+        config.descuentoFijo +
+        config.ahorroMensual;
+
+    // QUINCENAS
+    let primeraQuincena = dev / 2;              // SIN descuentos
+    let segundaQuincena = primeraQuincena - descuentosTotales;
 
     // NETO MENSUAL
-    let netoMensual = dev
-        - igss
-        - isr
-        - config.descuentoFijo
-        - ahorroNuevo;
-
-    // 👉 QUINCENAS
-    let primeraQuincena = dev / 2; // SIN descuentos
-    let segundaQuincena = netoMensual - primeraQuincena;
+    let netoMensual = primeraQuincena + segundaQuincena;
 
     resultado.innerHTML = `
     <!-- AHORRO ACUMULADO ARRIBA -->
     <div class="resultado" style="margin-bottom:15px">
         <div class="resultado-item" style="font-size:20px;font-weight:700">
             <span>🏦 Ahorro acumulado</span>
-            <span>Q${ahorroTotal.toFixed(2)}</span>
+            <span>Q${config.ahorroAcumulado.toFixed(2)}</span>
         </div>
     </div>
 
-    <!-- RESUMEN DEL MES -->
+    <!-- DESGLOSE DEL MES -->
     <div class="resultado">
 
         <div class="resultado-item">
@@ -326,13 +342,14 @@ function resumen(){
 
         <div class="resultado-item">
             <span>Ahorro mensual</span>
-            <span>-Q${ahorroNuevo.toFixed(2)}</span>
+            <span>-Q${config.ahorroMensual.toFixed(2)}</span>
         </div>
 
         <div class="resultado-item" style="font-size:18px;font-weight:700">
             <span>✅ Líquido mensual</span>
             <span>Q${netoMensual.toFixed(2)}</span>
         </div>
+
     </div>
     `;
 }
