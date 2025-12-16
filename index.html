@@ -256,6 +256,15 @@ function mostrarHistorial(){
     });
 }
 
+function eliminarRegistro(index){
+    if(confirm('¿Deseas eliminar este registro de horas extras?')){
+        registros.splice(index,1);
+        localStorage.setItem('registros',JSON.stringify(registros));
+        mostrarHistorial();
+    }
+}
+
+    
 
 /* RESUMEN */
 function resumen(){
@@ -372,5 +381,6 @@ function resumen(){
 
 </body>
 </html>
+
 
 
