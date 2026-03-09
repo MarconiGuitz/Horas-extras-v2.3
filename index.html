@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculadora de Horas extras</title>
-
 <link rel="manifest" href="manifest.json">
-
 <style>
 body{
     font-family: system-ui, sans-serif;
@@ -47,7 +45,8 @@ input,select,textarea{
     border-radius:10px;
     border:2px solid #eaeaea;
     margin-bottom:15px;
-    font-size:16px
+    font-size:16px;
+    box-sizing:border-box
 }
 textarea{resize:vertical}
 button{
@@ -55,30 +54,41 @@ button{
     border:none;border-radius:10px;
     background:linear-gradient(135deg,#000000,#979699);
     color:#fff;font-size:16px;
-    font-weight:600;cursor:pointer
+    font-weight:600;cursor:pointer;
+    margin-bottom:10px
 }
-.btn-cerrar{
-    background:linear-gradient(135deg,#7a0000,#c0392b);
-    margin-top:10px
-}
+.btn-cerrar{background:linear-gradient(135deg,#7a0000,#c0392b)}
 .resultado{
     background:linear-gradient(135deg,#b9c7b7,#599271);
-    color:#fff;
-    padding:20px;border-radius:15px
+    color:#fff;padding:20px;border-radius:15px
 }
 .resultado-item{
     display:flex;justify-content:space-between;
     padding:8px 0;border-bottom:1px solid rgba(255,255,255,.3)
 }
-.resultado-item:last-child{
-    border:none;font-size:18px;font-weight:700
-}
-.registro{
-    background:#f8f9fa;padding:15px;
-    border-radius:10px;margin-bottom:10px
-}
+.resultado-item:last-child{border:none;font-size:18px;font-weight:700}
+.registro{background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:10px}
 small{color:#666}
-hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
+hr{border:none;border-top:1px solid #eaeaea;margin:15px 0}
+hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
+.prestamo-box{
+    background:#f0f7ff;
+    border:2px solid #b3d4f5;
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:15px
+}
+.toggle-row{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+.toggle-row input[type=checkbox]{width:20px;height:20px;margin:0;cursor:pointer;accent-color:#000}
+.toggle-row label{margin:0;cursor:pointer;font-size:16px}
+.pagos-badge{
+    display:inline-block;
+    background:rgba(255,255,255,.25);
+    border-radius:8px;
+    padding:3px 8px;
+    font-size:12px;
+    margin-left:6px
+}
 </style>
 </head>
 
@@ -86,7 +96,7 @@ hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 <div class="container">
 
 <div class="header">
-<h2>💰 Calculadora de Horas Extras v2.8</h2>
+<h2>💰 Calculadora de Horas Extras v3.0</h2>
 <p>Control mensual (Q)</p>
 </div>
 
@@ -105,16 +115,15 @@ hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 <label>Sueldo base mensual (Q)</label>
 <input id="sueldoBase" type="number">
 
+
+
 <label>IGSS (%)</label>
 <input id="porcentajeIGSS" value="4.83">
 
 <label>ISR (%)</label>
-<input id="porcentajeISR" value="5">
+<input id="porcentajeISR" value="2.5893">
 
 <hr>
-
-<label>Préstamos / otros descuentos (Q)</label>
-<input id="descuentoFijo" type="number" value="0">
 
 <label>Ahorro mensual (Q)</label>
 <input id="ahorroMensual" type="number" value="0">
@@ -122,8 +131,25 @@ hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 <label>Ahorro acumulado actual (Q)</label>
 <input id="ahorroAcumulado" type="number" value="0">
 
+<hr>
+
+<div class="toggle-row">
+    <input type="checkbox" id="tienePrestamo" onchange="togglePrestamo()">
+    <label for="tienePrestamo">💳 Tengo préstamo activo</label>
+</div>
+
+<div id="seccionPrestamo" class="prestamo-box" style="display:none">
+    <label>Cuota fija mensual (Q)</label>
+    <input id="prestamoCuota" type="number" value="886.58">
+
+    <label>Interés del mes (Q) <small style="font-weight:400;color:#888">— actualizar cada mes</small></label>
+    <input id="prestamoInteres" type="number" value="0">
+
+    <label>Pagos restantes</label>
+    <input id="prestamoPagos" type="number" value="14">
+</div>
+
 <button onclick="guardarConfig()">Guardar configuración</button>
-<button class="btn-cerrar" onclick="cerrarMes()">📆 Cerrar mes</button>
 
 </div>
 
@@ -160,7 +186,6 @@ hr{border:1px solid rgba(255,255,255,.3);margin:15px 0}
 <script>
 let config={}, registros=[];
 
-/* INIT */
 window.onload=()=>{
     fecha.valueAsDate=new Date();
     config=JSON.parse(localStorage.getItem('config')||'{}');
@@ -170,14 +195,24 @@ window.onload=()=>{
         sueldoBase.value=config.sueldoBase;
         porcentajeIGSS.value=config.porcentajeIGSS;
         porcentajeISR.value=config.porcentajeISR;
-        descuentoFijo.value=config.descuentoFijo;
         ahorroMensual.value=config.ahorroMensual;
         ahorroAcumulado.value=config.ahorroAcumulado;
+
+        if(config.tienePrestamo){
+            tienePrestamo.checked=true;
+            seccionPrestamo.style.display='block';
+            prestamoCuota.value=config.prestamoCuota;
+            prestamoInteres.value=config.prestamoInteres;
+            prestamoPagos.value=config.prestamoPagos;
+        }
     }
     mostrarHistorial();
 };
 
-/* TABS */
+function togglePrestamo(){
+    seccionPrestamo.style.display=tienePrestamo.checked?'block':'none';
+}
+
 function tab(id,el){
     document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -186,50 +221,69 @@ function tab(id,el){
     if(id==='resumen') resumen();
 }
 
-/* CONFIG */
 function guardarConfig(){
     config={
         sueldoBase:+sueldoBase.value,
+        bono:250,
         porcentajeIGSS:+porcentajeIGSS.value,
         porcentajeISR:+porcentajeISR.value,
-        descuentoFijo:+descuentoFijo.value,
         ahorroMensual:+ahorroMensual.value,
-        ahorroAcumulado:+ahorroAcumulado.value
+        ahorroAcumulado:+ahorroAcumulado.value,
+        tienePrestamo:tienePrestamo.checked,
+        prestamoCuota:+prestamoCuota.value,
+        prestamoInteres:+prestamoInteres.value,
+        prestamoPagos:+prestamoPagos.value
     };
     localStorage.setItem('config',JSON.stringify(config));
     alert('Configuración guardada');
 }
 
-/* CERRAR MES */
 function cerrarMes(){
-    if(!confirm('¿Cerrar el mes y sumar el ahorro?')) return;
+    if(!confirm('¿Cerrar el mes? Se actualizará el ahorro y el préstamo.')) return;
 
+    // sumar ahorro mensual al acumulado
     config.ahorroAcumulado += config.ahorroMensual;
-    localStorage.setItem('config',JSON.stringify(config));
 
+    // descontar un pago del préstamo si está activo
+    if(config.tienePrestamo && config.prestamoPagos>0){
+        config.prestamoPagos -= 1;
+        config.prestamoInteres = 0; // resetear interés para el siguiente mes
+        if(config.prestamoPagos===0){
+            config.tienePrestamo=false;
+            alert('🎉 ¡Préstamo liquidado! Se desactivará automáticamente.');
+        }
+    }
+
+    localStorage.setItem('config',JSON.stringify(config));
     registros=[];
     localStorage.setItem('registros',JSON.stringify(registros));
 
-    alert('Mes cerrado correctamente');
+    // actualizar UI
+    ahorroAcumulado.value=config.ahorroAcumulado;
+    tienePrestamo.checked=config.tienePrestamo;
+    prestamoPagos.value=config.prestamoPagos;
+    prestamoInteres.value=0;
+    togglePrestamo();
+
+    alert('✅ Mes cerrado correctamente');
     mostrarHistorial();
 }
 
-/* REGISTROS */
 function registrar(){
+    const tarifaBase=config.sueldoBase/30/8;
     registros.push({
         fecha:fecha.value,
         hd:+hd.value,
         hn:+hn.value,
         desc:desc.value,
-        md:+hd.value*(config.sueldoBase/30/8*1.5),
-        mn:+hn.value*(config.sueldoBase/30/8*2)
+        md:+hd.value*(tarifaBase*1.5),
+        mn:+hn.value*(tarifaBase*2)
     });
     localStorage.setItem('registros',JSON.stringify(registros));
     hd.value=hn.value=0;desc.value='';
     mostrarHistorial();
 }
 
-/* HISTORIAL */
 function mostrarHistorial(){
     lista.innerHTML='';
     registros.forEach((r,i)=>{
@@ -239,17 +293,9 @@ function mostrarHistorial(){
             ☀️ ${r.hd}h = Q${r.md.toFixed(2)}<br>
             🌙 ${r.hn}h = Q${r.mn.toFixed(2)}<br>
             <small>${r.desc}</small><br><br>
-
             <button onclick="eliminarRegistro(${i})"
-                style="
-                    background:#b30000;
-                    color:#fff;
-                    border:none;
-                    border-radius:8px;
-                    padding:8px 12px;
-                    cursor:pointer;
-                    font-size:14px
-                ">
+                style="background:#b30000;color:#fff;border:none;border-radius:8px;
+                       padding:8px 12px;cursor:pointer;font-size:14px;width:auto;margin:0">
                 🗑️ Eliminar
             </button>
         </div>`;
@@ -257,48 +303,53 @@ function mostrarHistorial(){
 }
 
 function eliminarRegistro(index){
-    if(confirm('¿Deseas eliminar este registro de horas extras?')){
+    if(confirm('¿Deseas eliminar este registro?')){
         registros.splice(index,1);
         localStorage.setItem('registros',JSON.stringify(registros));
         mostrarHistorial();
     }
 }
 
-    
-
-/* RESUMEN */
 function resumen(){
+    const bono=250;
 
-    // HORAS
-    let horasD = registros.reduce((s,r)=>s+r.hd,0);
-    let horasN = registros.reduce((s,r)=>s+r.hn,0);
+    let horasD=registros.reduce((s,r)=>s+r.hd,0);
+    let horasN=registros.reduce((s,r)=>s+r.hn,0);
+    let totalD=registros.reduce((s,r)=>s+r.md,0);
+    let totalN=registros.reduce((s,r)=>s+r.mn,0);
+    let totalExtras=totalD+totalN;
 
-    let totalD = registros.reduce((s,r)=>s+r.md,0);
-    let totalN = registros.reduce((s,r)=>s+r.mn,0);
-    let totalExtras = totalD + totalN;
+    let dev=config.sueldoBase+bono+totalExtras;
+    let devAfecto=config.sueldoBase+totalExtras; // base afecta (sin bono)
 
-    // DEVENGADO
-    let dev = config.sueldoBase + totalExtras;
+    let igss=devAfecto*(config.porcentajeIGSS/100);
+    let isr=(devAfecto-igss)*(config.porcentajeISR/100);
 
-    // DESCUENTOS (SOLO 2ª QUINCENA)
-    let igss = dev * (config.porcentajeIGSS / 100);
-    let isr  = (dev - igss) * (config.porcentajeISR / 100);
+    // préstamo
+    let cuota=config.tienePrestamo?(config.prestamoCuota||0):0;
+    let interes=config.tienePrestamo?(config.prestamoInteres||0):0;
+    let pagosRestantes=config.prestamoPagos||0;
+    let totalPrestamo=cuota+interes;
 
-    let descuentosTotales =
-        igss +
-        isr +
-        config.descuentoFijo +
-        config.ahorroMensual;
+    let descuentosTotales=igss+isr+config.ahorroMensual+totalPrestamo;
+    let primeraQuincena=dev/2;
+    let segundaQuincena=dev-primeraQuincena-descuentosTotales;
+    let netoMensual=primeraQuincena+segundaQuincena;
 
-    // QUINCENAS
-    let primeraQuincena = dev / 2;              // SIN descuentos
-    let segundaQuincena = primeraQuincena - descuentosTotales;
+    let htmlPrestamo='';
+    if(config.tienePrestamo){
+        htmlPrestamo=`
+        <div class="resultado-item">
+            <span>💳 Cuota préstamo <span class="pagos-badge">${pagosRestantes} pagos restantes</span></span>
+            <span>-Q${cuota.toFixed(2)}</span>
+        </div>
+        <div class="resultado-item">
+            <span>📈 Interés del mes</span>
+            <span>-Q${interes.toFixed(2)}</span>
+        </div>`;
+    }
 
-    // NETO MENSUAL
-    let netoMensual = primeraQuincena + segundaQuincena;
-
-    resultado.innerHTML = `
-    <!-- AHORRO ACUMULADO ARRIBA -->
+    resultado.innerHTML=`
     <div class="resultado" style="margin-bottom:15px">
         <div class="resultado-item" style="font-size:20px;font-weight:700">
             <span>🏦 Ahorro acumulado</span>
@@ -306,81 +357,67 @@ function resumen(){
         </div>
     </div>
 
-    <!-- DESGLOSE DEL MES -->
     <div class="resultado">
-
         <div class="resultado-item">
             <span>Sueldo base</span>
             <span>Q${config.sueldoBase.toFixed(2)}</span>
         </div>
-
+        <div class="resultado-item">
+            <span>📋 Bono 37-2001</span>
+            <span>Q${bono.toFixed(2)}</span>
+        </div>
         <div class="resultado-item">
             <span>☀️ Horas diurnas (${horasD}h)</span>
             <span>Q${totalD.toFixed(2)}</span>
         </div>
-
         <div class="resultado-item">
             <span>🌙 Horas nocturnas (${horasN}h)</span>
             <span>Q${totalN.toFixed(2)}</span>
         </div>
-
         <div class="resultado-item">
             <span>Total horas extras</span>
             <span>Q${totalExtras.toFixed(2)}</span>
         </div>
-
         <div class="resultado-item">
             <span>💰 Devengado mensual</span>
             <span>Q${dev.toFixed(2)}</span>
         </div>
 
-        <hr>
+        <hr class="white">
 
         <div class="resultado-item">
             <span>💸 1ª quincena (sin descuentos)</span>
             <span>Q${primeraQuincena.toFixed(2)}</span>
         </div>
-
         <div class="resultado-item">
             <span>💸 2ª quincena (con descuentos)</span>
             <span>Q${segundaQuincena.toFixed(2)}</span>
         </div>
 
-        <hr>
+        <hr class="white">
 
         <div class="resultado-item">
-            <span>IGSS</span>
+            <span>IGSS (${config.porcentajeIGSS}%)</span>
             <span>-Q${igss.toFixed(2)}</span>
         </div>
-
         <div class="resultado-item">
-            <span>ISR</span>
+            <span>ISR (${config.porcentajeISR}%)</span>
             <span>-Q${isr.toFixed(2)}</span>
         </div>
-
-        <div class="resultado-item">
-            <span>Préstamos / otros</span>
-            <span>-Q${config.descuentoFijo.toFixed(2)}</span>
-        </div>
-
         <div class="resultado-item">
             <span>Ahorro mensual</span>
             <span>-Q${config.ahorroMensual.toFixed(2)}</span>
         </div>
+        ${htmlPrestamo}
 
         <div class="resultado-item" style="font-size:18px;font-weight:700">
             <span>✅ Líquido mensual</span>
             <span>Q${netoMensual.toFixed(2)}</span>
         </div>
-
     </div>
-    `;
+    <button class="btn-cerrar" onclick="cerrarMes()" style="margin-top:15px">📆 Cerrar mes</button>`;
 }
-
 </script>
 
 </body>
 </html>
-
-
-
