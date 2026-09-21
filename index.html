@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Calculadora de Horas extras</title>
-<link rel="manifest" href="manifest.json">
 <style>
 body{
     font-family: system-ui, sans-serif;
@@ -29,7 +28,7 @@ body{
 .tab{
     flex:1;padding:15px;border:none;
     background:none;font-weight:600;
-    cursor:pointer;color:#666
+    cursor:pointer;color:#666;font-size:13px;
 }
 .tab.active{
     background:#fff;
@@ -60,14 +59,25 @@ button{
 .btn-cerrar{background:linear-gradient(135deg,#7a0000,#c0392b)}
 .resultado{
     background:linear-gradient(135deg,#b9c7b7,#599271);
-    color:#fff;padding:20px;border-radius:15px
+    color:#fff;padding:20px;border-radius:15px;
+    margin-bottom:15px;
 }
 .resultado-item{
     display:flex;justify-content:space-between;
     padding:8px 0;border-bottom:1px solid rgba(255,255,255,.3)
 }
 .resultado-item:last-child{border:none;font-size:18px;font-weight:700}
-.registro{background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:10px}
+.registro{
+    background:#f8f9fa;
+    padding:15px;border-radius:10px;
+    margin-bottom:10px;
+    border-left: 4px solid #000;
+    transition: border-color 0.3s, background 0.3s;
+}
+.registro.reportado{
+    border-left-color: #28a745;
+    background: #f0fff4;
+}
 small{color:#666}
 hr{border:none;border-top:1px solid #eaeaea;margin:15px 0}
 hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
@@ -89,6 +99,109 @@ hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
     font-size:12px;
     margin-left:6px
 }
+
+/* Imágenes */
+.image-upload-area{
+    border:2px dashed #82d8a6;
+    border-radius:10px;
+    padding:20px;
+    text-align:center;
+    background:#f8fff8;
+    cursor:pointer;
+    margin-bottom:10px;
+}
+.image-upload-area p{margin:0;color:#2d7a4f;font-weight:600}
+.image-upload-area small{color:#888}
+.image-preview-container{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+    gap:8px;
+    margin-bottom:10px;
+}
+.image-preview{
+    position:relative;
+    padding-top:100%;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+.image-preview img{
+    position:absolute;top:0;left:0;
+    width:100%;height:100%;object-fit:cover;
+}
+.remove-image{
+    position:absolute;top:4px;right:4px;
+    background:#dc3545;color:#fff;
+    border:none;border-radius:50%;
+    width:22px;height:22px;
+    cursor:pointer;font-size:14px;
+    display:flex;align-items:center;justify-content:center;
+}
+.image-count{font-size:12px;color:#666;margin-bottom:10px;}
+.registro-images{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(70px,1fr));
+    gap:6px;
+    margin-top:8px;
+}
+.registro-images img{
+    width:100%;height:70px;
+    object-fit:cover;
+    border-radius:6px;
+    cursor:pointer;
+    transition:transform .2s;
+}
+.registro-images img:hover{transform:scale(1.05)}
+
+/* Badge reportado */
+.badge-reportado{
+    display:inline-block;
+    background:#28a745;color:#fff;
+    font-size:11px;padding:2px 8px;
+    border-radius:20px;margin-left:6px;
+    font-weight:600;
+}
+.badge-pendiente{
+    display:inline-block;
+    background:#ffc107;color:#333;
+    font-size:11px;padding:2px 8px;
+    border-radius:20px;margin-left:6px;
+    font-weight:600;
+}
+.check-reportado{
+    display:flex;align-items:center;gap:8px;
+    margin-top:10px;padding:8px 10px;
+    border-radius:8px;background:#efefef;
+    cursor:pointer;
+}
+.check-reportado input[type=checkbox]{
+    width:18px;height:18px;
+    margin:0;cursor:pointer;
+    accent-color:#28a745;
+}
+.check-reportado label{
+    margin:0;font-size:13px;
+    font-weight:600;cursor:pointer;color:#333;
+}
+
+/* Modal */
+.modal{
+    display:none;position:fixed;
+    z-index:1000;left:0;top:0;
+    width:100%;height:100%;
+    background:rgba(0,0,0,.9);
+}
+.modal img{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    max-width:90%;max-height:90%;
+    border-radius:8px;
+}
+.modal-close{
+    position:absolute;top:20px;right:30px;
+    color:#fff;font-size:40px;
+    cursor:pointer;font-weight:bold;
+}
 </style>
 </head>
 
@@ -96,95 +209,106 @@ hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
 <div class="container">
 
 <div class="header">
-<h2>💰 Calculadora de Horas Extras v3.2</h2>
-<p> No hay que ser chucho ni dejar la vida por esta empresa</p>
+    <h2>💰 Calculadora de Horas Extras v4.0</h2>
+    <p>Nueva actualización sujeta a cambios</p>
 </div>
 
 <div class="tabs">
-<button class="tab active" onclick="tab('config',this)">⚙️ Config</button>
-<button class="tab" onclick="tab('registro',this)">➕ Registro</button>
-<button class="tab" onclick="tab('historial',this)">📊 Historial</button>
-<button class="tab" onclick="tab('resumen',this)">💵 Resumen</button>
+    <button class="tab active" onclick="tab('config',this)">⚙️ Config</button>
+    <button class="tab" onclick="tab('registro',this)">➕ Registro</button>
+    <button class="tab" onclick="tab('historial',this)">📊 Historial</button>
+    <button class="tab" onclick="tab('resumen',this)">💵 Resumen</button>
 </div>
 
 <div class="content">
 
 <!-- CONFIG -->
 <div id="config" class="section active">
+    <label>Sueldo base mensual (Q)</label>
+    <input id="sueldoBase" type="number">
 
-<label>Sueldo base mensual (Q)</label>
-<input id="sueldoBase" type="number">
+    <label>IGSS (%)</label>
+    <input id="porcentajeIGSS" value="4.83">
 
+    <label>ISR (%)</label>
+    <input id="porcentajeISR" value="2.5893">
 
+    <hr>
 
-<label>IGSS (%)</label>
-<input id="porcentajeIGSS" value="4.83">
+    <label>Ahorro mensual (Q)</label>
+    <input id="ahorroMensual" type="number" value="0">
 
-<label>ISR (%)</label>
-<input id="porcentajeISR" value="2.5893">
+    <label>Ahorro acumulado actual (Q)</label>
+    <input id="ahorroAcumulado" type="number" value="0">
 
-<hr>
+    <hr>
 
-<label>Ahorro mensual (Q)</label>
-<input id="ahorroMensual" type="number" value="0">
+    <div class="toggle-row">
+        <input type="checkbox" id="tienePrestamo" onchange="togglePrestamo()">
+        <label for="tienePrestamo">💳 Tengo préstamo activo</label>
+    </div>
 
-<label>Ahorro acumulado actual (Q)</label>
-<input id="ahorroAcumulado" type="number" value="0">
+    <div id="seccionPrestamo" class="prestamo-box" style="display:none">
+        <label>Cuota fija mensual (Q)</label>
+        <input id="prestamoCuota" type="number" value="886.58">
 
-<hr>
+        <label>Interés del mes (Q) <small style="font-weight:400;color:#888">— actualizar cada mes</small></label>
+        <input id="prestamoInteres" type="number" value="0">
 
-<div class="toggle-row">
-    <input type="checkbox" id="tienePrestamo" onchange="togglePrestamo()">
-    <label for="tienePrestamo">💳 Tengo préstamo activo</label>
-</div>
+        <label>Pagos restantes</label>
+        <input id="prestamoPagos" type="number" value="14">
+    </div>
 
-<div id="seccionPrestamo" class="prestamo-box" style="display:none">
-    <label>Cuota fija mensual (Q)</label>
-    <input id="prestamoCuota" type="number" value="886.58">
-
-    <label>Interés del mes (Q) <small style="font-weight:400;color:#888">— actualizar cada mes</small></label>
-    <input id="prestamoInteres" type="number" value="0">
-
-    <label>Pagos restantes</label>
-    <input id="prestamoPagos" type="number" value="14">
-</div>
-
-<button onclick="guardarConfig()">Guardar configuración</button>
-
+    <button onclick="guardarConfig()">Guardar configuración</button>
 </div>
 
 <!-- REGISTRO -->
 <div id="registro" class="section">
-<label>Fecha</label>
-<input id="fecha" type="date">
+    <label>Fecha</label>
+    <input id="fecha" type="date">
 
-<label>Horas diurnas</label>
-<input id="hd" type="number" step="0.5" value="0">
+    <label>Horas diurnas</label>
+    <input id="hd" type="number" step="0.5" value="0">
 
-<label>Horas nocturnas</label>
-<input id="hn" type="number" step="0.5" value="0">
+    <label>Horas nocturnas</label>
+    <input id="hn" type="number" step="0.5" value="0">
 
-<label>Motivo</label>
-<textarea id="desc"></textarea>
+    <label>Motivo</label>
+    <textarea id="desc"></textarea>
 
-<button onclick="registrar()">Registrar horas</button>
+    <label>📷 Evidencias fotográficas <small style="font-weight:400;color:#888">(máx. 6 imágenes)</small></label>
+    <div class="image-upload-area" onclick="document.getElementById('imageInput').click()">
+        <input type="file" id="imageInput" accept="image/*" multiple style="display:none" onchange="handleImages(event)">
+        <p>📸 Toca aquí para subir fotos</p>
+        <small>Fotos del trabajo realizado</small>
+    </div>
+    <div class="image-count" id="imageCount">0 de 6 imágenes</div>
+    <div class="image-preview-container" id="imagePreview"></div>
+
+    <button onclick="registrar()">Registrar horas</button>
 </div>
 
 <!-- HISTORIAL -->
 <div id="historial" class="section">
-<div id="lista"></div>
+    <div id="lista"></div>
 </div>
 
 <!-- RESUMEN -->
 <div id="resumen" class="section">
-<div id="resultado"></div>
+    <div id="resultado"></div>
 </div>
 
 </div>
+</div>
+
+<!-- Modal imagen -->
+<div class="modal" id="modal" onclick="this.style.display='none'">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg">
 </div>
 
 <script>
-let config={}, registros=[];
+let config={}, registros=[], imagenesTemp=[];
 
 window.onload=()=>{
     fecha.valueAsDate=new Date();
@@ -195,9 +319,8 @@ window.onload=()=>{
         sueldoBase.value=config.sueldoBase;
         porcentajeIGSS.value=config.porcentajeIGSS;
         porcentajeISR.value=config.porcentajeISR;
-        ahorroMensual.value=config.ahorroMensual;
-        ahorroAcumulado.value=config.ahorroAcumulado;
-
+        ahorroMensual.value=config.ahorroMensual||0;
+        ahorroAcumulado.value=config.ahorroAcumulado||0;
         if(config.tienePrestamo){
             tienePrestamo.checked=true;
             seccionPrestamo.style.display='block';
@@ -219,6 +342,7 @@ function tab(id,el){
     document.getElementById(id).classList.add('active');
     el.classList.add('active');
     if(id==='resumen') resumen();
+    if(id==='historial') mostrarHistorial();
 }
 
 function guardarConfig(){
@@ -235,110 +359,211 @@ function guardarConfig(){
         prestamoPagos:+prestamoPagos.value
     };
     localStorage.setItem('config',JSON.stringify(config));
-    alert('Configuración guardada');
+    alert('✅ Configuración guardada');
 }
 
 function cerrarMes(){
     if(!confirm('¿Cerrar el mes? Se actualizará el ahorro y el préstamo.')) return;
-
-    // sumar ahorro mensual al acumulado
     config.ahorroAcumulado += config.ahorroMensual;
-
-    // descontar un pago del préstamo si está activo
     if(config.tienePrestamo && config.prestamoPagos>0){
         config.prestamoPagos -= 1;
-        config.prestamoInteres = 0; // resetear interés para el siguiente mes
+        config.prestamoInteres = 0;
         if(config.prestamoPagos===0){
             config.tienePrestamo=false;
-            alert('🎉 ¡Préstamo liquidado! Se desactivará automáticamente.');
+            alert('🎉 ¡Préstamo liquidado!');
         }
     }
-
     localStorage.setItem('config',JSON.stringify(config));
     registros=[];
     localStorage.setItem('registros',JSON.stringify(registros));
-
-    // actualizar UI
     ahorroAcumulado.value=config.ahorroAcumulado;
     tienePrestamo.checked=config.tienePrestamo;
     prestamoPagos.value=config.prestamoPagos;
     prestamoInteres.value=0;
     togglePrestamo();
-
     alert('✅ Mes cerrado correctamente');
     mostrarHistorial();
 }
 
+/* ── Imágenes ── */
+function handleImages(e){
+    const files=Array.from(e.target.files);
+    if(imagenesTemp.length+files.length>6){
+        alert('Máximo 6 imágenes');
+        e.target.value='';
+        return;
+    }
+    files.forEach(f=>{
+        if(!f.type.startsWith('image/')) return;
+        const r=new FileReader();
+        r.onload=ev=>{
+            imagenesTemp.push(ev.target.result);
+            renderPreview();
+        };
+        r.readAsDataURL(f);
+    });
+    e.target.value='';
+}
+
+function renderPreview(){
+    imagePreview.innerHTML='';
+    imageCount.textContent=`${imagenesTemp.length} de 6 imágenes`;
+    imagenesTemp.forEach((img,i)=>{
+        const d=document.createElement('div');
+        d.className='image-preview';
+        d.innerHTML=`<img src="${img}"><button class="remove-image" onclick="quitarImg(${i})">×</button>`;
+        imagePreview.appendChild(d);
+    });
+}
+
+function quitarImg(i){
+    imagenesTemp.splice(i,1);
+    renderPreview();
+}
+
+function abrirModal(src){
+    modalImg.src=src;
+    modal.style.display='block';
+}
+
+/* ── Registrar ── */
 function registrar(){
-    const tarifaBase=config.sueldoBase/30/8;
+    if(!config.sueldoBase){ alert('Configura el sueldo base primero'); return; }
+    if(!fecha.value){ alert('Selecciona una fecha'); return; }
+    if(+hd.value===0 && +hn.value===0){ alert('Ingresa al menos una hora'); return; }
+    if(!desc.value.trim()){ alert('Ingresa el motivo'); return; }
+
+    const base=config.sueldoBase/30/8;
     registros.push({
-        fecha:fecha.value,
-        hd:+hd.value,
-        hn:+hn.value,
-        desc:desc.value,
-        md:+hd.value*(tarifaBase*1.5),
-        mn:+hn.value*(tarifaBase*2)
+        id: Date.now(),
+        fecha: fecha.value,
+        hd: +hd.value,
+        hn: +hn.value,
+        desc: desc.value,
+        md: +hd.value*(base*1.5),
+        mn: +hn.value*(base*2),
+        imagenes: [...imagenesTemp],
+        reportado: false
     });
     localStorage.setItem('registros',JSON.stringify(registros));
-    hd.value=hn.value=0;desc.value='';
+    hd.value=hn.value=0;
+    desc.value='';
+    imagenesTemp=[];
+    renderPreview();
+    alert('✅ Registro guardado');
     mostrarHistorial();
 }
 
+/* ── Historial ── */
 function mostrarHistorial(){
     lista.innerHTML='';
-    registros.forEach((r,i)=>{
-        lista.innerHTML+=`
-        <div class="registro">
-            <b>${r.fecha}</b><br>
+    if(registros.length===0){
+        lista.innerHTML='<p style="text-align:center;color:#aaa;padding:30px">Sin registros</p>';
+        return;
+    }
+    // Sanear registros viejos que puedan tener valores undefined
+    registros=registros.map(r=>({
+        ...r,
+        md: r.md ?? 0,
+        mn: r.mn ?? 0,
+        hd: r.hd ?? 0,
+        hn: r.hn ?? 0,
+        imagenes: r.imagenes ?? [],
+        reportado: r.reportado ?? false
+    }));
+    [...registros].reverse().forEach(r=>{
+        const div=document.createElement('div');
+        div.className='registro'+(r.reportado?' reportado':'');
+        div.id='reg_'+r.id;
+
+        let imgs='';
+        if(r.imagenes && r.imagenes.length>0){
+            imgs='<div class="registro-images">';
+            r.imagenes.forEach(src=>{
+                imgs+=`<img src="${src}" onclick="abrirModal('${src}')">`;
+            });
+            imgs+='</div>';
+        }
+
+        div.innerHTML=`
+            <b>${r.fecha}</b>
+            ${r.reportado
+                ? '<span class="badge-reportado">✅ Reportado</span>'
+                : '<span class="badge-pendiente">⏳ Pendiente</span>'}
+            <br>
             ☀️ ${r.hd}h = Q${r.md.toFixed(2)}<br>
             🌙 ${r.hn}h = Q${r.mn.toFixed(2)}<br>
-            <small>${r.desc}</small><br><br>
-            <button onclick="eliminarRegistro(${i})"
+            <small>${r.desc}</small>
+            ${r.imagenes&&r.imagenes.length>0?`<br><small>📷 ${r.imagenes.length} imagen(es)</small>`:''}
+            ${imgs}
+            <div class="check-reportado" onclick="toggleReportado(${r.id})">
+                <input type="checkbox" ${r.reportado?'checked':''} onclick="event.stopPropagation();toggleReportado(${r.id})">
+                <label>Reportado en papel</label>
+            </div>
+            <br>
+            <button onclick="eliminarRegistro(${r.id})"
                 style="background:#b30000;color:#fff;border:none;border-radius:8px;
                        padding:8px 12px;cursor:pointer;font-size:14px;width:auto;margin:0">
                 🗑️ Eliminar
             </button>
-        </div>`;
+        `;
+        lista.appendChild(div);
     });
 }
 
-function eliminarRegistro(index){
-    if(confirm('¿Deseas eliminar este registro?')){
-        registros.splice(index,1);
-        localStorage.setItem('registros',JSON.stringify(registros));
-        mostrarHistorial();
-    }
+function toggleReportado(id){
+    const idx=registros.findIndex(r=>r.id===id);
+    if(idx===-1) return;
+    registros[idx].reportado=!registros[idx].reportado;
+    localStorage.setItem('registros',JSON.stringify(registros));
+    mostrarHistorial();
 }
 
+function eliminarRegistro(id){
+    if(!confirm('¿Eliminar este registro?')) return;
+    registros=registros.filter(r=>r.id!==id);
+    localStorage.setItem('registros',JSON.stringify(registros));
+    mostrarHistorial();
+}
+
+/* ── Resumen ── */
 function resumen(){
+    if(!config.sueldoBase){
+        resultado.innerHTML='<p style="text-align:center;color:#aaa">Configura el sueldo base primero</p>';
+        return;
+    }
+    // Sanear registros antes de calcular
+    const regs=registros.map(r=>({
+        ...r,
+        md: r.md ?? 0,
+        mn: r.mn ?? 0,
+        hd: r.hd ?? 0,
+        hn: r.hn ?? 0
+    }));
     const bono=250;
+    const horasD=regs.reduce((s,r)=>s+(r.hd||0),0);
+    const horasN=regs.reduce((s,r)=>s+(r.hn||0),0);
+    const totalD=regs.reduce((s,r)=>s+(r.md||0),0);
+    const totalN=regs.reduce((s,r)=>s+(r.mn||0),0);
+    const totalExtras=totalD+totalN;
 
-    let horasD=registros.reduce((s,r)=>s+r.hd,0);
-    let horasN=registros.reduce((s,r)=>s+r.hn,0);
-    let totalD=registros.reduce((s,r)=>s+r.md,0);
-    let totalN=registros.reduce((s,r)=>s+r.mn,0);
-    let totalExtras=totalD+totalN;
+    const dev=config.sueldoBase+bono+totalExtras;
+    const devAfecto=config.sueldoBase+totalExtras;
 
-    let dev=config.sueldoBase+bono+totalExtras;
-    let devAfecto=config.sueldoBase+totalExtras; // base afecta (sin bono)
+    const igss=devAfecto*(config.porcentajeIGSS/100);
+    const isr=(devAfecto-igss)*(config.porcentajeISR/100);
 
-    let igss=devAfecto*(config.porcentajeIGSS/100);
-    let isr=(devAfecto-igss)*(config.porcentajeISR/100);
+    const cuota=config.tienePrestamo?(config.prestamoCuota||0):0;
+    const interes=config.tienePrestamo?(config.prestamoInteres||0):0;
+    const pagosRestantes=config.prestamoPagos||0;
+    const totalPrestamo=cuota+interes;
 
-    // préstamo
-    let cuota=config.tienePrestamo?(config.prestamoCuota||0):0;
-    let interes=config.tienePrestamo?(config.prestamoInteres||0):0;
-    let pagosRestantes=config.prestamoPagos||0;
-    let totalPrestamo=cuota+interes;
+    const descuentosTotales=igss+isr+config.ahorroMensual+totalPrestamo;
+    const primeraQuincena=dev/2;
+    const segundaQuincena=dev-primeraQuincena-descuentosTotales;
+    const netoMensual=primeraQuincena+segundaQuincena;
 
-    let descuentosTotales=igss+isr+config.ahorroMensual+totalPrestamo;
-    let primeraQuincena=dev/2;
-    let segundaQuincena=dev-primeraQuincena-descuentosTotales;
-    let netoMensual=primeraQuincena+segundaQuincena;
-
-    let htmlPrestamo='';
-    if(config.tienePrestamo){
-        htmlPrestamo=`
+    const htmlPrestamo=config.tienePrestamo?`
         <div class="resultado-item">
             <span>💳 Cuota préstamo <span class="pagos-badge">${pagosRestantes} pagos restantes</span></span>
             <span>-Q${cuota.toFixed(2)}</span>
@@ -346,78 +571,38 @@ function resumen(){
         <div class="resultado-item">
             <span>📈 Interés del mes</span>
             <span>-Q${interes.toFixed(2)}</span>
-        </div>`;
-    }
+        </div>`:'';
 
     resultado.innerHTML=`
-    <div class="resultado" style="margin-bottom:15px">
+    <div class="resultado">
         <div class="resultado-item" style="font-size:20px;font-weight:700">
             <span>🏦 Ahorro acumulado</span>
-            <span>Q${config.ahorroAcumulado.toFixed(2)}</span>
+            <span>Q${(config.ahorroAcumulado||0).toFixed(2)}</span>
         </div>
     </div>
 
     <div class="resultado">
-        <div class="resultado-item">
-            <span>Sueldo base</span>
-            <span>Q${config.sueldoBase.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>📋 Bono 37-2001</span>
-            <span>Q${bono.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>☀️ Horas diurnas (${horasD}h)</span>
-            <span>Q${totalD.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>🌙 Horas nocturnas (${horasN}h)</span>
-            <span>Q${totalN.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>Total horas extras</span>
-            <span>Q${totalExtras.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>💰 Devengado mensual</span>
-            <span>Q${dev.toFixed(2)}</span>
-        </div>
-
+        <div class="resultado-item"><span>Sueldo base</span><span>Q${config.sueldoBase.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>📋 Bono 37-2001</span><span>Q${bono.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>☀️ Horas diurnas (${horasD}h)</span><span>Q${totalD.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>🌙 Horas nocturnas (${horasN}h)</span><span>Q${totalN.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>Total horas extras</span><span>Q${totalExtras.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>💰 Devengado mensual</span><span>Q${dev.toFixed(2)}</span></div>
         <hr class="white">
-
-        <div class="resultado-item">
-            <span>💸 1ª quincena (sin descuentos)</span>
-            <span>Q${primeraQuincena.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>💸 2ª quincena (con descuentos)</span>
-            <span>Q${segundaQuincena.toFixed(2)}</span>
-        </div>
-
+        <div class="resultado-item"><span>💸 1ª quincena (sin descuentos)</span><span>Q${primeraQuincena.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>💸 2ª quincena (con descuentos)</span><span>Q${segundaQuincena.toFixed(2)}</span></div>
         <hr class="white">
-
-        <div class="resultado-item">
-            <span>IGSS (${config.porcentajeIGSS}%)</span>
-            <span>-Q${igss.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>ISR (${config.porcentajeISR}%)</span>
-            <span>-Q${isr.toFixed(2)}</span>
-        </div>
-        <div class="resultado-item">
-            <span>Ahorro mensual</span>
-            <span>-Q${config.ahorroMensual.toFixed(2)}</span>
-        </div>
+        <div class="resultado-item"><span>IGSS (${config.porcentajeIGSS}%)</span><span>-Q${igss.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>ISR (${config.porcentajeISR}%)</span><span>-Q${isr.toFixed(2)}</span></div>
+        <div class="resultado-item"><span>💰 Ahorro mensual</span><span>-Q${(config.ahorroMensual||0).toFixed(2)}</span></div>
         ${htmlPrestamo}
-
         <div class="resultado-item" style="font-size:18px;font-weight:700">
             <span>✅ Líquido mensual</span>
             <span>Q${netoMensual.toFixed(2)}</span>
         </div>
     </div>
-    <button class="btn-cerrar" onclick="cerrarMes()" style="margin-top:15px">📆 Cerrar mes</button>`;
+    <button class="btn-cerrar" onclick="cerrarMes()">📆 Cerrar mes</button>`;
 }
 </script>
-
 </body>
 </html>
