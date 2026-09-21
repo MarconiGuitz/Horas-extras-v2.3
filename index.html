@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculadora de Horas extras</title>
+<title>Calculadora de Horas Extras v3.3</title>
 <style>
 body{
     font-family: system-ui, sans-serif;
@@ -71,12 +71,12 @@ button{
     background:#f8f9fa;
     padding:15px;border-radius:10px;
     margin-bottom:10px;
-    border-left: 4px solid #000;
-    transition: border-color 0.3s, background 0.3s;
+    border-left:4px solid #000;
+    transition:border-color 0.3s,background 0.3s;
 }
 .registro.reportado{
-    border-left-color: #28a745;
-    background: #f0fff4;
+    border-left-color:#28a745;
+    background:#f0fff4;
 }
 small{color:#666}
 hr{border:none;border-top:1px solid #eaeaea;margin:15px 0}
@@ -99,8 +99,6 @@ hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
     font-size:12px;
     margin-left:6px
 }
-
-/* Imágenes */
 .image-upload-area{
     border:2px dashed #82d8a6;
     border-radius:10px;
@@ -152,8 +150,6 @@ hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
     transition:transform .2s;
 }
 .registro-images img:hover{transform:scale(1.05)}
-
-/* Badge reportado */
 .badge-reportado{
     display:inline-block;
     background:#28a745;color:#fff;
@@ -183,8 +179,6 @@ hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
     margin:0;font-size:13px;
     font-weight:600;cursor:pointer;color:#333;
 }
-
-/* Modal */
 .modal{
     display:none;position:fixed;
     z-index:1000;left:0;top:0;
@@ -204,13 +198,12 @@ hr.white{border:none;border-top:1px solid rgba(255,255,255,.3);margin:15px 0}
 }
 </style>
 </head>
-
 <body>
 <div class="container">
 
 <div class="header">
-    <h2>💰 Calculadora de Horas Extras v4.0</h2>
-    <p>Nueva actualización sujeta a cambios</p>
+    <h2>💰 Calculadora de Horas Extras v3.3</h2>
+    <p>No hay que ser chucho ni dejar la vida por esta empresa</p>
 </div>
 
 <div class="tabs">
@@ -314,6 +307,22 @@ window.onload=()=>{
     fecha.valueAsDate=new Date();
     config=JSON.parse(localStorage.getItem('config')||'{}');
     registros=JSON.parse(localStorage.getItem('registros')||'[]');
+
+    // Sanear registros viejos: asignar id si no tienen, y rellenar campos faltantes
+    let necesitaGuardar=false;
+    registros=registros.map((r,i)=>{
+        let cambio=false;
+        if(!r.id){ r.id=Date.now()+i; cambio=true; }
+        if(r.md===undefined){ r.md=0; cambio=true; }
+        if(r.mn===undefined){ r.mn=0; cambio=true; }
+        if(r.hd===undefined){ r.hd=0; cambio=true; }
+        if(r.hn===undefined){ r.hn=0; cambio=true; }
+        if(!r.imagenes){ r.imagenes=[]; cambio=true; }
+        if(r.reportado===undefined){ r.reportado=false; cambio=true; }
+        if(cambio) necesitaGuardar=true;
+        return r;
+    });
+    if(necesitaGuardar) localStorage.setItem('registros',JSON.stringify(registros));
 
     if(config.sueldoBase){
         sueldoBase.value=config.sueldoBase;
@@ -461,20 +470,9 @@ function mostrarHistorial(){
         lista.innerHTML='<p style="text-align:center;color:#aaa;padding:30px">Sin registros</p>';
         return;
     }
-    // Sanear registros viejos que puedan tener valores undefined
-    registros=registros.map(r=>({
-        ...r,
-        md: r.md ?? 0,
-        mn: r.mn ?? 0,
-        hd: r.hd ?? 0,
-        hn: r.hn ?? 0,
-        imagenes: r.imagenes ?? [],
-        reportado: r.reportado ?? false
-    }));
     [...registros].reverse().forEach(r=>{
         const div=document.createElement('div');
         div.className='registro'+(r.reportado?' reportado':'');
-        div.id='reg_'+r.id;
 
         let imgs='';
         if(r.imagenes && r.imagenes.length>0){
@@ -498,7 +496,7 @@ function mostrarHistorial(){
             ${imgs}
             <div class="check-reportado" onclick="toggleReportado(${r.id})">
                 <input type="checkbox" ${r.reportado?'checked':''} onclick="event.stopPropagation();toggleReportado(${r.id})">
-                <label>Reportado en papel</label>
+                <label>Reportado a planilla</label>
             </div>
             <br>
             <button onclick="eliminarRegistro(${r.id})"
@@ -514,7 +512,12 @@ function mostrarHistorial(){
 function toggleReportado(id){
     const idx=registros.findIndex(r=>r.id===id);
     if(idx===-1) return;
-    registros[idx].reportado=!registros[idx].reportado;
+    registros[idx].reportado=!(registros[idx].reportado??false);
+    registros[idx].md  = registros[idx].md  ?? 0;
+    registros[idx].mn  = registros[idx].mn  ?? 0;
+    registros[idx].hd  = registros[idx].hd  ?? 0;
+    registros[idx].hn  = registros[idx].hn  ?? 0;
+    registros[idx].imagenes = registros[idx].imagenes ?? [];
     localStorage.setItem('registros',JSON.stringify(registros));
     mostrarHistorial();
 }
@@ -532,33 +535,25 @@ function resumen(){
         resultado.innerHTML='<p style="text-align:center;color:#aaa">Configura el sueldo base primero</p>';
         return;
     }
-    // Sanear registros antes de calcular
-    const regs=registros.map(r=>({
-        ...r,
-        md: r.md ?? 0,
-        mn: r.mn ?? 0,
-        hd: r.hd ?? 0,
-        hn: r.hn ?? 0
-    }));
     const bono=250;
-    const horasD=regs.reduce((s,r)=>s+(r.hd||0),0);
-    const horasN=regs.reduce((s,r)=>s+(r.hn||0),0);
-    const totalD=regs.reduce((s,r)=>s+(r.md||0),0);
-    const totalN=regs.reduce((s,r)=>s+(r.mn||0),0);
+    const horasD=registros.reduce((s,r)=>s+(r.hd||0),0);
+    const horasN=registros.reduce((s,r)=>s+(r.hn||0),0);
+    const totalD=registros.reduce((s,r)=>s+(r.md||0),0);
+    const totalN=registros.reduce((s,r)=>s+(r.mn||0),0);
     const totalExtras=totalD+totalN;
 
     const dev=config.sueldoBase+bono+totalExtras;
     const devAfecto=config.sueldoBase+totalExtras;
 
-    const igss=devAfecto*(config.porcentajeIGSS/100);
-    const isr=(devAfecto-igss)*(config.porcentajeISR/100);
+    const igss=devAfecto*((config.porcentajeIGSS||4.83)/100);
+    const isr=(devAfecto-igss)*((config.porcentajeISR||2.5893)/100);
 
     const cuota=config.tienePrestamo?(config.prestamoCuota||0):0;
     const interes=config.tienePrestamo?(config.prestamoInteres||0):0;
     const pagosRestantes=config.prestamoPagos||0;
     const totalPrestamo=cuota+interes;
 
-    const descuentosTotales=igss+isr+config.ahorroMensual+totalPrestamo;
+    const descuentosTotales=igss+isr+(config.ahorroMensual||0)+totalPrestamo;
     const primeraQuincena=dev/2;
     const segundaQuincena=dev-primeraQuincena-descuentosTotales;
     const netoMensual=primeraQuincena+segundaQuincena;
